@@ -33,6 +33,11 @@ class Hall extends Model
         return $this->hasMany(HallRate::class, 'hall_id', 'id');
     }
 
+    public function getAverageRatingAttribute()
+    {
+        return $this->rates()->avg('stars');
+    }
+
     public function events()
     {
         return $this->hasMany(Event::class, 'hall_id', 'id');

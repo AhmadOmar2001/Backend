@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateHallRequest;
 use App\Models\Event;
+use App\Models\FavoriteHall;
 use App\Models\Hall;
 use App\Models\HallImage;
 use App\Models\Notification;
@@ -15,12 +16,13 @@ use Illuminate\Support\Facades\File;
 class HallController extends Controller
 {
     //Get Halls Function
-    public function getHalls()
+    public function getHalls(Request $request)
     {
         $user = Auth::guard('user')->user();
         $total_rate = 0;
+        $halls_merge = [];
         if ($user->account_type == 'admin' || $user->account_type == 'regular_user') {
-            $halls = Hall::with('images', 'options')->get();
+            $halls = Hall::with('images', 'options')->where('hall_name', "LIKE", '%' . $request->search . '%')->orWhere('location', "LIKE", '%' . $request->search . '%')->get();
             foreach ($halls as $hall) {
                 foreach ($hall->rates as $rate) {
                     $total_rate += $rate->stars;
@@ -36,7 +38,9 @@ class HallController extends Controller
             }
             return success($halls_merge, null);
         } else {
-            $halls = $user->halls()->with('images', 'options')->get();
+            $halls = $user->halls()->with('images', 'options')->where(function ($query) use ($request) {
+                $query->where('hall_name', "LIKE", '%' . $request->search . '%')->orWhere('location', "LIKE", '%' . $request->search . '%');
+            })->get();
             foreach ($halls as $hall) {
                 foreach ($hall->rates as $rate) {
                     $total_rate += $rate->stars;
@@ -52,6 +56,30 @@ class HallController extends Controller
             }
             return success($halls_merge, null);
         }
+    }
+
+    //Get Halls Ordered From High To Low Rates Function
+    public function orderingHalls()
+    {
+        $user = Auth::guard('user')->user();
+        $total_rate = 0;
+        $halls = Hall::with('images', 'options')->get()->sortByDesc(function ($hall) {
+            return $hall->average_rating;
+        });
+        foreach ($halls as $hall) {
+            foreach ($hall->rates as $rate) {
+                $total_rate += $rate->stars;
+            }
+            if (count($hall->rates) != 0) {
+                $total_rate /= count($hall->rates);
+            }
+            $rate = [
+                'total_rate' => $total_rate,
+            ];
+            $halls_merge[] = array_merge($hall->toArray(), $rate);
+            $total_rate = 0;
+        }
+        return success($halls_merge, null);
     }
 
     //Get Hall Information Function
@@ -195,5 +223,51 @@ class HallController extends Controller
     {
         $reservations = $hall->events()->orderby('start_date', 'desc')->get();
         return success($reservations, null);
+    }
+
+    //Add/Remove Hall To Favorite Function
+    public function addRemoveFromFavorite(Hall $hall)
+    {
+        $user = Auth::guard('user')->user();
+        $favorite_halls = $user->favoriteHalls;
+
+        foreach ($favorite_halls as $favorite_hall) {
+            if ($favorite_hall->id == $hall->id) {
+                $favorite_hall = FavoriteHall::where('user_id', $user->id)->where('hall_id', $hall->id)->first();
+                $favorite_hall->delete();
+                return success(null, 'this hall removed from favorite');
+            }
+        }
+        FavoriteHall::create([
+            'user_id' => $user->id,
+            'hall_id' => $hall->id
+        ]);
+
+        return success(null, 'this hall added to favorite', 201);
+    }
+
+    //Get Favorite Halls Function
+    public function getFavoriteHalls()
+    {
+        $user = Auth::guard('user')->user();
+        $favorite_halls = $user->favoriteHalls;
+        $total_rate = 0;
+        $halls_merge = [];
+
+        foreach ($favorite_halls as $hall) {
+            foreach ($hall->rates as $rate) {
+                $total_rate += $rate->stars;
+            }
+            if (count($hall->rates) != 0) {
+                $total_rate /= count($hall->rates);
+            }
+            $rate = [
+                'total_rate' => $total_rate,
+            ];
+            $halls_merge[] = array_merge($hall->toArray(), $rate);
+            $total_rate = 0;
+        }
+
+        return success($halls_merge, null);
     }
 }

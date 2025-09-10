@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class Authentication
+class InviteUser
 {
     /**
      * Handle an incoming request.
@@ -17,9 +17,10 @@ class Authentication
      */
     public function handle(Request $request, Closure $next)
     {
-        if (Auth::guard('user')->user() && Auth::guard('user')->user()->status) {
+        if (Auth::guard('user')->user()->account_type == 'regular_user') {
             return $next($request);
         }
+
         return error("some thing went wrong", "you don't have authentication", 502);
     }
 }

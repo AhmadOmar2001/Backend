@@ -72,5 +72,9 @@ class Kernel extends HttpKernel
         'hall-rate' => \App\Http\Middleware\HallRating::class,
         'event' => \App\Http\Middleware\Event::class,
         'notification' => \App\Http\Middleware\Notification::class,
+        'invite-users' => \App\Http\Middleware\InviteUser::class,
+        'support' => \App\Http\Middleware\Support::class,
+        'favorite' => \App\Http\Middleware\Favorite::class,
+        'friend' => \App\Http\Middleware\Friend::class,
     ];
 }

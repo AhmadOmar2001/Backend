@@ -77,10 +77,33 @@ class UserController extends Controller
         return success(null, 'user deleted successfully');
     }
 
+    //Activate - Deactivate User Account Function
+    public function setUserStatus(User $user){
+        if($user->status){
+            $user->update([
+                'status' => 0
+            ]);
+
+            return success(null, 'this account deactivated successfully');
+        }
+        
+        $user->update([
+            'status' => 1
+        ]);
+
+        return success(null, 'this account activated successfully');
+    }
+
     //Get Users Function
     public function getUsers(Request $request)
     {
-        $users = User::where('account_type', $request->account_type)->get();
+        $users = User::where('account_type', $request->account_type)
+            ->where(function ($query) use ($request) {
+                $query->where('first_name', 'LIKE', '%' . $request->search . '%')
+                    ->orWhere('last_name', 'LIKE', '%' . $request->search . '%')
+                    ->orWhere('email', 'LIKE', '%' . $request->search . '%');
+            })
+            ->get();
 
         return success($users, null);
     }
@@ -89,5 +112,20 @@ class UserController extends Controller
     public function getUserInformation(User $user)
     {
         return success($user, null);
+    }
+
+    //Get Regular User Function
+    public function getRegularUsers(Request $request)
+    {
+        $user = Auth::guard('user')->user();
+        $users = User::whereNot('id', $user->id)
+            ->where('account_type', 'regular_user')
+            ->where(function ($query) use ($request) {
+                $query->where('first_name', 'LIKE', '%' . $request->search . '%')
+                    ->orWhere('last_name', 'LIKE', '%' . $request->search . '%')
+                    ->orWhere('email', 'LIKE', '%' . $request->search . '%');
+            })->get();
+
+        return success($users, null);
     }
 }

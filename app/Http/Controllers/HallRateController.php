@@ -6,7 +6,6 @@ use App\Http\Requests\RatingRequest;
 use App\Models\Hall;
 use App\Models\HallRate;
 use App\Models\Notification;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class HallRateController extends Controller

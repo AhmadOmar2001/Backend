@@ -40,4 +40,14 @@ class Event extends Model
     {
         return $this->belongsToMany(Option::class, EventOption::class, 'event_id', 'option_id');
     }
+
+    public function invitations()
+    {
+        return $this->hasMany(InvitedUser::class, 'event_id', 'id');
+    }
+
+    public function invitedUsers()
+    {
+        return $this->belongsToMany(User::class, 'invited_users', 'event_id', 'user_id');
+    }
 }

@@ -8,7 +8,6 @@ use App\Models\Event;
 use App\Models\EventOption;
 use App\Models\Hall;
 use App\Models\Notification;
-use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -124,16 +123,25 @@ class EventController extends Controller
     //Get Events Function
     public function getEvents(Request $request)
     {
-        $events = Event::with('hall', 'options')->where('event_type', $request->event_type)->whereNot('hall_id', null)->get();
+        $search = $request->search;
+        $events = Event::with('hall', 'options')
+            ->where(function ($query) use ($search) {
+                $query->where('event_name', 'LIKE', '%' . $search . '%')->orwhereHas('user', function ($query) use ($search) {
+                    $query->where('first_name', 'LIKE', '%' . $search . '%')->orWhere('last_name', 'LIKE', '%' . $search . '%');
+                });
+            })
+            ->where('event_type', $request->event_type)->whereNot('hall_id', null)->get();
 
         return success($events, null);
     }
 
     //Get My Events Function
-    public function getMyEvents()
+    public function getMyEvents(Request $request)
     {
         $user = Auth::guard('user')->user();
-        $events = $user->events()->with('hall.options', 'options')->get();
+        $events = $user->events()->with('hall.options', 'options')->where(function ($query) use ($request) {
+            $query->where('event_name', 'LIKE', '%' . $request->search . '%');
+        })->get();
 
         return success($events, null);
     }

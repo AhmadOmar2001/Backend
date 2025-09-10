@@ -13,14 +13,14 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('friends', function (Blueprint $table) {
             $table->id();
-            $table->string("first_name");
-            $table->string("last_name");
-            $table->string("email")->unique();
-            $table->string("password");
-            $table->enum("account_type", ["admin", "regular_user", "service_provider"]);
-            $table->boolean('status')->default(1);
+            $table->unsignedBigInteger('user1_id');
+            $table->unsignedBigInteger('user2_id');
+            $table->boolean('status')->default(0);
+
+            $table->foreign('user1_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('user2_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -32,6 +32,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('favorite_friends');
     }
 };

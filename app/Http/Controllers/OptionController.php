@@ -6,7 +6,6 @@ use App\Http\Requests\OptionRequest;
 use App\Models\Hall;
 use App\Models\Notification;
 use App\Models\Option;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class OptionController extends Controller

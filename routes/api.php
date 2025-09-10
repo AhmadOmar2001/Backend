@@ -1,11 +1,16 @@
 <?php
 
 use App\Http\Controllers\AuthenticationController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\FriendController;
 use App\Http\Controllers\HallController;
 use App\Http\Controllers\HallRateController;
+use App\Http\Controllers\InviteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OptionController;
+use App\Http\Controllers\PostController;
+use App\Http\Controllers\SupportController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -73,6 +78,7 @@ Route::middleware('authentication')->group(function () {
         Route::get('/{user}', 'getUserInformation');
         Route::post('/', 'createUser');
         Route::post('/{user}', 'updateUser');
+        Route::post('/set-status/{user}', 'setUserStatus');
         Route::delete('/{user}', 'deleteUser');
     });
     Route::controller(HallRateController::class)->middleware('hall-rate')->prefix('halls-rates')->group(function () {
@@ -87,8 +93,46 @@ Route::middleware('authentication')->group(function () {
             Route::delete('/{event}', 'deleteEvent');
         });
     });
-    Route::controller(NotificationController::class)->middleware('notification')->prefix('notifications')->group(function (){
+    Route::controller(NotificationController::class)->middleware('notification')->prefix('notifications')->group(function () {
         Route::get('/', 'getNotifications');
     });
+    Route::controller(InviteController::class)->middleware('invite-users')->prefix('invite-users')->group(function () {
+        Route::get('/{event}', 'getInvitedUsers');
+        Route::get('/', 'getInvitedEvents');
+        Route::post('/{event}', 'inviteUsers');
+        Route::delete('/{invitedUser}', 'removeUser');
+        Route::post('/accept/{event}', 'acceptRequest');
+        Route::delete('/reject/{event}', 'rejectRequest');
+    });
+    Route::controller(PostController::class)->prefix('posts')->group(function () {
+        Route::get('/', 'getPosts');
+        Route::post('/', 'createPost');
+        Route::post('/{post}', 'editPost');
+        Route::delete('/{post}', 'deletePost');
+    });
+    Route::controller(CommentController::class)->prefix('comments')->group(function () {
+        Route::get('/{post}', 'getPostComments');
+        Route::post('/{post}', 'addComment');
+        Route::delete('/{comment}', 'deleteComment');
+    });
+    Route::controller(SupportController::class)->prefix('supports')->group(function () {
+        Route::post('/', 'requestSupport');
+        Route::get('/', 'getSupportRequests')->middleware('support');
+    });
+    Route::controller(HallController::class)->middleware('favorite')->prefix('favorite-halls')->group(function () {
+        Route::post('/{hall}', 'addRemoveFromFavorite');
+        Route::get('/', 'getFavoriteHalls');
+    });
+    Route::controller(FriendController::class)->middleware('friend')->prefix('friends')->group(function () {
+        Route::get('/', 'getFriends');
+        Route::get('/requests', 'getFriendRequests');
+        Route::post('/send-request/{user}', 'sendRequest');
+        Route::post('/accept/{user}', 'acceptFriendRequest');
+        Route::delete('/denie/{user}', 'denieFriendRequest');
+    });
     Route::get('/my-events', [EventController::class, 'getMyEvents']);
+    Route::get('/regular-users', [UserController::class, 'getRegularUsers']);
+    Route::get('/participant-events', [InviteController::class, 'getParticipantEvents'])->middleware('invite-users');
+    Route::get('/ordering-halls', [HallController::class, 'orderingHalls']);
+    Route::get('/sent-requests', [FriendController::class, 'getSentFriendRequests'])->middleware('friend');
 });
